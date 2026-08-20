@@ -4,6 +4,21 @@ All notable structural changes, file movements, and documentation updates are do
 
 ---
 
+## [2026-08-21] — Sudhindra Setup & Baseline Complete (feat/Sudhindra)
+
+### Completed
+- Verified and initialized branch `feat/Sudhindra`.
+- Resolved npm dependencies (225 packages, 0 vulnerabilities).
+- Verified TypeScript compilation: `npm run lint` (0 errors).
+- Verified full production build: `npm run build` (Vite frontend + esbuild server bundle).
+- Started dev server on `http://localhost:3000` and verified all endpoints via live HTTP requests.
+- Confirmed all tri-state verdicts: `AUTHENTIC` (FEMA signed), `UNSIGNED` (unknown hash), and `PROVEN_FAKE` (revoked credential).
+- Verified BUG-001 is resolved via `associateKey()` mapping in `db.ts`.
+- Configured local private memory in `.project-memory-private/` (added to `.gitignore`).
+- Created `docs/project-memory/VALIDATION_STATUS.md` and pre-commit gate `scripts/validate-before-commit.mjs`.
+
+---
+
 ## [2026-08-19] — Live Runtime Audit & Current-State Verification (Phases 0–3)
 
 ### Verified
