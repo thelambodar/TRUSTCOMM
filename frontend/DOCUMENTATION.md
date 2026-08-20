@@ -1,196 +1,237 @@
-# TRUSTCOMM — Technical Architecture & Systems Specification
+# TRUSTCOMM — Frontend Technical Architecture & Systems Specification
 
 > **SOAIDEATHON-S26 / Smart India Hackathon Research & Project Documentation**  
 > *Focus Area: Cybersecurity, Digital Provenance, AI Safety, Blockchain & Emergency Communication*  
-> *Specification Version: 2.4.0*  
+> *Frontend Specification Version: 2.4.0*  
 > *Document Date: August 2026*
 
 ---
 
 ## 📋 Table of Contents
-1. [Executive Summary & Problem Statement](#1-executive-summary--problem-statement)
-2. [Technical Position & System Framing](#2-technical-position--system-framing)
-3. [System Architecture & Sequence Flow](#3-system-architecture--sequence-flow)
-4. [Core Security Modules & Specifications](#4-core-security-modules--specifications)
-   - [4.1 C2PA 2.4 Cryptographic Provenance Engine](#41-c2pa-24-cryptographic-provenance-engine)
-   - [4.2 Tri-State & 6 Extended Verdict Classification](#42-tri-state--6-extended-verdict-classification)
+1. [Executive Summary & System Overview](#1-executive-summary--system-overview)
+2. [Frontend Architecture & Component Hierarchy](#2-frontend-architecture--component-hierarchy)
+3. [User Experience Portals & Role Interfaces](#3-user-experience-portals--role-interfaces)
+   - [3.1 Public Verification Inspector (`PublicVerification.tsx`)](#31-public-verification-inspector-publicverificationtsx)
+   - [3.2 Institutional Issuance Studio (`InstitutionalPortal.tsx`)](#32-institutional-issuance-studio-institutionalportaltsx)
+   - [3.3 System Admin Console (`AdminConsole.tsx`)](#33-system-admin-console-adminconsoletsx)
+   - [3.4 System Architecture Inspector (`ArchitectureViewer.tsx`)](#34-system-architecture-inspector-architectureviewertsx)
+   - [3.5 Global Navigation Bar (`Navbar.tsx`)](#35-global-navigation-bar-navbartsx)
+4. [Client-Side Cryptography & Security Modules](#4-client-side-cryptography--security-modules)
+   - [4.1 In-Browser WebCrypto Digesting](#41-in-browser-webcrypto-digesting)
+   - [4.2 6 Extended Verdict Classification Pipeline](#42-6-extended-verdict-classification-pipeline)
    - [4.3 Explainable Trust Score Decision Engine](#43-explainable-trust-score-decision-engine)
-   - [4.4 Notice Versioning & Superseded Detection](#44-notice-versioning--superseded-detection)
-   - [4.5 Credential Lifecycle & Real-Time Key Revocation](#45-credential-lifecycle--real-time-key-revocation)
-   - [4.6 Emergency Broadcast Mode & Geographic Scope](#46-emergency-broadcast-mode--geographic-scope)
-   - [4.7 Soft-Binding Provenance Recovery](#47-soft-binding-provenance-recovery)
-   - [4.8 Zero-Knowledge Privacy Redaction](#48-zero-knowledge-privacy-redaction)
-   - [4.9 Permissioned Blockchain Audit Ledger](#49-permissioned-blockchain-audit-ledger)
-   - [4.10 Multi-Modal AI Forensic Inspector](#410-multi-modal-ai-forensic-inspector)
-5. [Threat Model & Security Controls Matrix](#5-threat-model--security-controls-matrix)
-6. [Live Demonstration Scenarios (SIH Test Flow)](#6-live-demonstration-scenarios-sih-test-flow)
-7. [Limitations & Technical Boundaries](#7-limitations--technical-boundaries)
+   - [4.4 Soft-Binding Provenance Recovery Engine](#44-soft-binding-provenance-recovery-engine)
+   - [4.5 Multi-Modal Forensic Canvas Visualizers](#45-multi-modal-forensic-canvas-visualizers)
+5. [Standalone Zero-Dependency HTML5 Client (`frontend/standalone-client/`)](#5-standalone-zero-dependency-html5-client-frontendstandalone-client)
+6. [API Integration & Data Flow Contracts](#6-api-integration--data-flow-contracts)
+7. [UI/UX Design Tokens & Glassmorphism Theme](#7-uiux-design-tokens--glassmorphism-theme)
+8. [Live Demonstration Scenarios (SIH Test Matrix)](#8-live-demonstration-scenarios-sih-test-matrix)
 
 ---
 
-## 1. Executive Summary & Problem Statement
+## 1. Executive Summary & System Overview
 
-### 1.1 Problem Statement
-Generative AI has evolved digital document forgery into convincing synthetic audio, video, images, and official-looking announcements. A fabricated emergency notice or synthetic voice clone can spread across social media within minutes, triggering public panic, financial loss, and reputational damage.
+Generative AI has evolved digital document forgery into convincing synthetic audio, video, images, and official-looking announcements. Traditional deepfake detectors operate **post-distribution** and fail to verify who originally issued the content or whether signing credentials remain authorized.
 
-Traditional deepfake detectors operate **post-distribution**. While a detector may estimate that a file looks synthetic, it cannot independently verify:
-- Who originally issued the content
-- Whether the claimed institution authorized it
-- Whether the file is the latest official version
-- Whether the signing credential has been revoked or compromised
-
-### 1.2 The TRUSTCOMM Solution
-**TRUSTCOMM** addresses this gap by establishing **authenticity at the source**. Official communications (audio, video broadcasts, PDFs, images) are cryptographically bound to verified institutional identities using **C2PA (Content Credentials)** standards. 
-
-When citizens inspect content via the **TRUSTCOMM Citizen Portal** or scan a dynamic QR code, the system answers four fundamental questions:
-1. **Who issued this?** (Verified institutional identity & officer role)
-2. **Has it been altered?** (Tamper-evident SHA-256 content binding digest)
-3. **Is the signer still authorized?** (Real-time Key Revocation Ledger)
-4. **Is this the current official version?** (Automatic superseded notice detection)
+The **TRUSTCOMM Frontend** addresses this challenge by establishing **authenticity at the source**. Built with React 19, TypeScript, and native WebCrypto browser APIs, the client application allows citizens, authorities, and security teams to verify digital media, issue cryptographically signed announcements, inspect C2PA provenance manifests, and track key revocation statuses in real-time.
 
 ---
 
-## 2. Technical Position & System Framing
-
-> [!IMPORTANT]
-> **Core Technical Position (Section 15 Specification):**  
-> TRUSTCOMM does not state *"Our AI detects every deepfake"* or *"Blockchain makes content authentic"*.  
-> Instead, **cryptographic provenance is the primary authenticity layer**, while **AI-based manipulation analysis is a secondary risk signal**. TRUSTCOMM unifies provenance, institutional identity, credential status, version currency, and AI evidence into a single explainable verification decision.
-
----
-
-## 3. System Architecture & Sequence Flow
+## 2. Frontend Architecture & Component Hierarchy
 
 ```mermaid
-sequenceDiagram
-    autonumber
-    participant Officer as Institutional Officer
-    participant Studio as Publisher Studio
-    participant C2PA as C2PA Engine (WebCrypto)
-    participant Ledger as Blockchain Ledger
-    participant Citizen as Citizen / Inspector
-    participant Trust as Trust Decision Engine
-
-    Officer->>Studio: Upload Media & Fill Notice Form (Title, Priority, Version)
-    Studio->>C2PA: Compute SHA-256 & ECDSA P-256 Signature
-    C2PA->>Studio: Return C2PA Manifest & Render QR Code
-    Studio->>Ledger: Log Off-Chain Event (Notice ID, Hash, Signer, TxHash)
+graph TD
+    Root["React 19 Root (main.tsx)"] --> App["App Container (App.tsx)"]
+    App --> Nav["Navbar (Navbar.tsx)"]
+    App --> Views{"Active View State"}
     
-    Citizen->>Inspector: Drag File OR Scan QR Verification Link
-    Inspector->>C2PA: Validate ECDSA Signature & SHA-256 Digest
-    Inspector->>Ledger: Query Revocation Ledger & Version Registry
-    Inspector->>Trust: Evaluate 6 Security Signals
-    Trust-->>Citizen: Output Verdict (e.g. VERIFIED + CURRENT, Trust Score: 100%)
+    Views -->|view = 'verify'| PV["PublicVerification.tsx"]
+    Views -->|view = 'issuer'| IP["InstitutionalPortal.tsx"]
+    Views -->|view = 'admin'| AC["AdminConsole.tsx"]
+    Views -->|view = 'architecture'| AV["ArchitectureViewer.tsx"]
+
+    PV --> SubPV1["Drag-and-Drop Inspector"]
+    PV --> SubPV2["Trust Score Meter (0-100%)"]
+    PV --> SubPV3["6 Extended Verdict Badges"]
+    PV --> SubPV4["Audio FFT Spectrum Canvas"]
+
+    IP --> SubIP1["Media Upload Dropzone"]
+    IP --> SubIP2["Notice Metadata Form"]
+    IP --> SubIP3["KMS Hardware Signing Trigger"]
+    IP --> SubIP4["QR Code Renderer"]
+
+    AC --> SubAC1["Institutional Identity Onboarding"]
+    AC --> SubAC2["Real-Time Revocation Ledger"]
+    AC --> SubAC3["Blockchain Audit Event Log"]
 ```
 
 ---
 
-## 4. Core Security Modules & Specifications
+## 3. User Experience Portals & Role Interfaces
 
-### 4.1 C2PA 2.4 Cryptographic Provenance Engine
-- **Specification**: Implements C2PA 2.4 claims with JSON-LD JUMBF metadata manifest schema.
-- **Cryptography**: Uses W3C Native WebCrypto API (`ECDSA` curve `P-256` with `SHA-256` hashing).
-- **Hard Binding**: Binds media bytes directly to signed claim assertions (`c2pa.hash.data`).
+### 3.1 Public Verification Inspector ([`PublicVerification.tsx`](file:///c:/Users/Lenovo/OneDrive/Desktop/deepfake-proof-verification/deepfake-proof-verification/frontend/src/components/PublicVerification.tsx))
+* **Primary Persona**: Citizens, journalists, and public recipients of emergency notices.
+* **Core Responsibilities**:
+  - Drag-and-drop media file upload or URL verification link inspection.
+  - Native client-side SHA-256 byte hashing using WebCrypto `window.crypto.subtle.digest`.
+  - Rendering of explainable $0-100\%$ Trust Scores with individual breakdown bars.
+  - Displaying one of **6 Extended Verdict States** (Verified, Superseded, Tampered, Revoked, Suspicious, Unsigned).
+  - Real-time Web Audio API FFT spectral analysis for audio clips and canvas heatmaps for video.
+  - Automatic resolution of perceptual soft-binding fingerprints for stripped media.
 
-### 4.2 Tri-State & 6 Extended Verdict Classification
-The verification pipeline outputs one of six explicit states:
+### 3.2 Institutional Issuance Studio ([`InstitutionalPortal.tsx`](file:///c:/Users/Lenovo/OneDrive/Desktop/deepfake-proof-verification/deepfake-proof-verification/frontend/src/components/InstitutionalPortal.tsx))
+* **Primary Persona**: Verified institutional communications officers (e.g., FEMA, WHO, NOAA).
+* **Core Responsibilities**:
+  - Uploading official broadcasts, PDF notices, advisories, and press images.
+  - Defining notice metadata: Title, Notice ID, Priority Level (`CRITICAL`, `HIGH`, `NORMAL`), Version (`v1.0`, `v2.0`), Geographic Scope, and Expiry Date.
+  - Executing KMS hardware enclave digital signatures (ECDSA P-256 / RSA-PSS).
+  - Rendering downloadable dynamic QR codes for physical/digital distribution.
+  - Monitoring active institutional key vaults and signing credentials.
 
-| Verdict State | Icon / Badge | Description |
+### 3.3 System Admin Console ([`AdminConsole.tsx`](file:///c:/Users/Lenovo/OneDrive/Desktop/deepfake-proof-verification/deepfake-proof-verification/frontend/src/components/AdminConsole.tsx))
+* **Primary Persona**: Platform Security Administrators.
+* **Core Responsibilities**:
+  - Registering and onboarding verified government agencies and news organizations.
+  - Revoking compromised signing keys instantly with revocation rationale logging.
+  - Auditing off-chain permissioned blockchain transaction logs.
+
+### 3.4 System Architecture Inspector ([`ArchitectureViewer.tsx`](file:///c:/Users/Lenovo/OneDrive/Desktop/deepfake-proof-verification/deepfake-proof-verification/frontend/src/components/ArchitectureViewer.tsx))
+* **Primary Persona**: Security Auditors & Developers.
+* **Core Responsibilities**:
+  - Interactive visualization of serverless Cloud Functions (`uploadMedia`, `signMedia`, `verifyMedia`, `revokeCredential`).
+  - Inspection of JSON-LD JUMBF C2PA 2.4 manifest claims.
+
+### 3.5 Global Navigation Bar ([`Navbar.tsx`](file:///c:/Users/Lenovo/OneDrive/Desktop/deepfake-proof-verification/deepfake-proof-verification/frontend/src/components/Navbar.tsx))
+* **Features**:
+  - One-click role switching between Public Inspector, Issuer Studio, Admin Console, and Architecture Inspector.
+  - Real-time Emergency Broadcast alert banner indicator.
+  - Active network & API connection status indicator.
+
+---
+
+## 4. Client-Side Cryptography & Security Modules
+
+### 4.1 In-Browser WebCrypto Digesting
+To ensure content integrity without relying on server hash honesty, the client calculates the SHA-256 digest directly from the raw file `ArrayBuffer`:
+
+```typescript
+export async function calculateFileHash(file: File): Promise<string> {
+  const buffer = await file.arrayBuffer();
+  const hashBuffer = await window.crypto.subtle.digest('SHA-256', buffer);
+  const hashArray = Array.from(new Uint8Array(hashBuffer));
+  return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+}
+```
+
+### 4.2 6 Extended Verdict Classification Pipeline
+The UI evaluates cryptographic, identity, credential, version, and AI signals to present a definitive verdict:
+
+| Verdict Code | Badge Styling | Description |
 | :--- | :--- | :--- |
-| **VERIFIED AUTHENTIC & CURRENT** | 🟢 `AUTHENTIC_CURRENT` | Cryptographically signed, unrevoked key, matching digest, current notice version. |
-| **AUTHENTIC BUT OUTDATED** | 🟡 `AUTHENTIC_OUTDATED` | Genuinely signed, but superseded by a newer official version (e.g., Version 2). |
-| **TAMPERED CONTENT** | 🔴 `TAMPERED` | Signature failure, broken manifest claims, or media content digest mismatch. |
-| **CREDENTIAL REVOKED** | 🔴 `REVOKED` | Signed by a key placed on the real-time Revocation Ledger due to HSM breach. |
-| **SUSPICIOUS / AI DEEPFAKE** | 🔴 `SUSPICIOUS` | Unsigned content exhibiting high spectral/facial AI manipulation risk (>75%). |
-| **UNSIGNED CONTENT** | 🟡 `UNSIGNED` | Lacks C2PA metadata manifest. |
+| `VERIFIED_CURRENT` | 🟢 Emerald Glass | Cryptographically signed, unrevoked key, matching hash digest, current version. |
+| `SUPERSEDED` | 🟡 Amber Glass | Genuinely signed, but superseded by a newer official notice version. |
+| `TAMPERED` | 🔴 Rose Glass | Signature verification failed or media content bytes modified post-issuance. |
+| `REVOKED` | 🔴 Rose Glass | Signed by a credential placed on the real-time Revocation Ledger. |
+| `SUSPICIOUS` | 🔴 Rose Glass | Unsigned media exhibiting high AI deepfake anomaly risk ($>75\%$). |
+| `UNSIGNED` | 🟡 Slate Glass | Content lacks C2PA manifest metadata. |
 
 ### 4.3 Explainable Trust Score Decision Engine
-Calculates a unified percentage score ($T \in [0, 100]$) evaluating 6 independent security factors:
+Calculates a weighted composite percentage score ($T \in [0, 100]$):
 
 $$\text{Trust Score} = S_{\text{sig}} + S_{\text{auth}} + S_{\text{hash}} + S_{\text{rev}} + S_{\text{ver}} + S_{\text{ai}}$$
 
-Where:
-- $S_{\text{sig}} = 30$ pts if ECDSA signature is cryptographically valid (0 otherwise).
-- $S_{\text{auth}} = 20$ pts if signed by a trusted institutional certificate anchor (0 otherwise).
-- $S_{\text{hash}} = 20$ pts if computed SHA-256 matches manifest digest (0 otherwise).
-- $S_{\text{rev}} = 10$ pts if key is unrevoked (0 if revoked).
-- $S_{\text{ver}} = 10$ pts if notice version is `CURRENT` (2 pts if `SUPERSEDED`).
-- $S_{\text{ai}} = \max(0, 10 - \lfloor \frac{\text{AI Anomaly \%}}{10} \rfloor)$ pts secondary penalty.
+* $S_{\text{sig}} = 30$ pts if ECDSA signature is valid.
+* $S_{\text{auth}} = 20$ pts if signed by a recognized certificate anchor.
+* $S_{\text{hash}} = 20$ pts if computed SHA-256 matches manifest assertion.
+* $S_{\text{rev}} = 10$ pts if key is active (0 if revoked).
+* $S_{\text{ver}} = 10$ pts if version is current (2 pts if superseded).
+* $S_{\text{ai}} = \max(0, 10 - \lfloor \frac{\text{AI Anomaly \%}}{10} \rfloor)$ secondary penalty.
 
-### 4.4 Notice Versioning & Superseded Detection
-Distinguishes genuine historical messages from active instructions. When an authority issues Version 2 of a notice, Version 1 is marked as `SUPERSEDED`. 
-- Citizens inspecting Version 1 receive a warning: **"AUTHENTIC BUT OUTDATED (SUPERSEDED)"**, preventing old genuine announcements from causing public confusion.
+### 4.4 Soft-Binding Provenance Recovery Engine
+When social platforms strip metadata during upload, the frontend computes a perceptual fingerprint (`pfp_...`) from media features. If matched in the backend soft-binding registry, the UI displays a recovery notification: **"Soft-Binding Provenance Recovered"**.
 
-### 4.5 Credential Lifecycle & Real-Time Key Revocation
-When a private signing key or Hardware Security Module (HSM) is compromised:
-- Security administrators issue a revocation record containing Key ID, Authority Name, Timestamp, and Reason.
-- The verification inspector invalidates signatures tied to compromised credentials instantly.
-
-### 4.6 Emergency Broadcast Mode & Geographic Scope
-Allows authorized officers to specify:
-- **Priority Level**: `CRITICAL`, `HIGH`, `NORMAL`
-- **Geographic Scope**: e.g., `Coastal Sector 4 & Sector 5`
-- **Validity Period**: `validFrom` and `validUntil` timestamps
-
-### 4.7 Soft-Binding Provenance Recovery
-When social media platforms re-encode media or strip EXIF/C2PA metadata:
-- **TRUSTCOMM** computes a **Perceptual Fingerprint** (`pfp_...`) from invariant media features.
-- If a match is found in the soft-binding registry, the system displays: **"Soft-Binding Provenance Recovered"**, linking the media back to its official origin.
-
-### 4.8 Zero-Knowledge Privacy Redaction
-To protect sensitive operational fields (e.g. responder GPS coordinates):
-- Senders apply **Salted Hash Commitments**:
-$$\text{Commitment} = \text{SHA256}(\text{FieldValue} \parallel \text{":"} \parallel \text{RandomSalt})$$
-- Recipients verify commitment integrity without exposing raw text.
-
-### 4.9 Permissioned Blockchain Audit Ledger
-- Stores audit event logs off-chain to avoid privacy leakage.
-- Logs immutable event blocks (`COMMUNICATION_SIGNED`, `VERSION_SUPERSEDED`, `CREDENTIAL_REVOKED`, `VERIFICATION_AUDIT`) with transaction hashes (`0x...`).
-
-### 4.10 Multi-Modal AI Forensic Inspector
-Acts as a secondary risk signal:
-- **Audio**: Web Audio API FFT analyzer checks for artificial frequency truncation (>16.2kHz) and TTS phase artifacts.
-- **Video**: Canvas thermal heatmap overlay detects temporal face boundary inconsistencies.
-- **Document**: Scans OCR kerning and background noise uniformity for edited PDFs/images.
+### 4.5 Multi-Modal Forensic Canvas Visualizers
+- **Audio FFT Analyzer**: Uses `AudioContext` and `AnalyserNode` to perform real-time frequency spectrum analysis, flagging artificial high-frequency cutoffs ($>16.2\text{kHz}$) typical of neural TTS text-to-speech models.
+- **Video Heatmap Overlay**: Renders temporal face boundary anomaly heatmaps over HTML5 `<video>` elements.
 
 ---
 
-## 5. Threat Model & Security Controls Matrix
+## 5. Standalone Zero-Dependency HTML5 Client (`frontend/standalone-client/`)
 
-| Threat | Security Risk | TRUSTCOMM Security Control |
-| :--- | :--- | :--- |
-| **Stolen Signing Key** | Fake official notice | Real-time Credential Revocation Ledger + Role Separation |
-| **Content Tampering** | Changed official message | Cryptographic SHA-256 Content Binding Digest |
-| **Metadata Stripping** | Lost C2PA manifest | Perceptual Soft-Binding Fingerprint Recovery |
-| **Fake Authority Impersonation** | Impersonation | Trusted Certificate Anchor & Key ID Registry |
-| **Old Genuine Notice Reuse** | Public confusion | Version Currency & Expiry Date Verification |
-| **AI Deepfake Impersonation** | Misinformation | No-Provenance Warning + Secondary AI Forensic Layer |
-| **Credential Replay** | Continued abuse | Timestamp Validation + Revocation Evidence |
-| **Privacy Leakage** | Sensitive data exposure | Zero-Knowledge Salted Hash Commitments + Off-Chain Media |
+The standalone client provides a self-contained browser implementation requiring zero build tools or `node_modules`:
 
----
-
-## 6. Live Demonstration Scenarios (SIH Test Flow)
-
-The application includes 6 pre-configured test scenarios mapping directly to Section 12 (Steps 19–26) of the research report:
-
-1. **Scenario 1: Authentic Emergency Broadcast (Version 1)**  
-   *Result*: `VERIFIED AUTHENTIC & CURRENT` (Trust Score: 100%)
-2. **Scenario 2: Altered Video Payload**  
-   *Result*: `TAMPERED CONTENT` (SHA-256 digest mismatch)
-3. **Scenario 3: Order Signed with Compromised Key**  
-   *Result*: `CREDENTIAL REVOKED` (Blocked by Revocation Ledger)
-4. **Scenario 4: Notice Version 1 Update Test**  
-   *Result*: `AUTHENTIC BUT OUTDATED (SUPERSEDED)` (Superseded by v2)
-5. **Scenario 5: Unsigned AI Voice Clone Press Audio**  
-   *Result*: `SUSPICIOUS / AI DEEPFAKE` (Neural TTS cutoff detected)
-6. **Scenario 6: Unverified Policy Draft Notice**  
-   *Result*: `UNSIGNED CONTENT` (Missing manifest alert)
+```
+frontend/standalone-client/
+├── index.html        # Single-Page Application markup with glassmorphism layout
+├── styles.css        # Pure CSS3 glassmorphism styling & animations
+├── js/
+│   ├── app.js        # Event handling & UI state management
+│   ├── c2pa.js       # In-browser JSON-LD manifest parsing
+│   ├── crypto.js     # Native WebCrypto ECDSA P-256 key generation & signing
+│   ├── forensics.js  # Audio FFT spectral canvas rendering
+│   ├── blockchain.js # Local simulated permissioned ledger
+│   └── qr.js         # Client-side QR code generator
+├── README.md         # Quickstart guide for standalone mode
+└── DOCUMENTATION.md  # Technical architecture for standalone client
+```
 
 ---
 
-## 7. Limitations & Technical Boundaries
+## 6. API Integration & Data Flow Contracts
 
-1. **AI Anomaly Detection**: AI detectors provide secondary risk signals and may produce false positives or false negatives. Cryptographic provenance remains primary.
-2. **Factual Truth**: Cryptographic provenance proves who signed content and whether it was altered; it does not guarantee the underlying factual statement is true.
-3. **Compromised Workflow**: An authorized signer operating under coercion can still produce a valid signature until the credential is explicitly revoked.
+The frontend communicates with the Express backend via REST endpoints proxied through Vite:
+
+```typescript
+// 1. Verify Media Payload
+POST /api/verify
+Request:  { mediaHash: string, manifestJson?: object, mediaUrl?: string }
+Response: { verdict: VerdictState, trustScore: number, details: VerificationDetails }
+
+// 2. Sign Media Payload
+POST /api/sign
+Request:  { mediaHash: string, metadata: NoticeMetadata, authorityId: string }
+Response: { signature: string, manifest: C2PAManifest, qrCodeUrl: string }
+
+// 3. Key Revocation Execution
+POST /api/revocations
+Request:  { keyId: string, authorityId: string, reason: string }
+Response: { status: 'REVOKED', timestamp: string }
+
+// 4. Onboard Institution
+POST /api/institutions
+Request:  { name: string, domain: string, publicKeyPem: string }
+Response: { authorityId: string, status: 'ACTIVE' }
+```
+
+---
+
+## 7. UI/UX Design Tokens & Glassmorphism Theme
+
+The UI follows modern cyber-glassmorphism design guidelines:
+
+```css
+/* Core Theme Design Tokens */
+--bg-dark: #090d16;
+--card-glass-bg: rgba(15, 23, 42, 0.75);
+--card-glass-border: rgba(255, 255, 255, 0.1);
+--accent-cyan: #06b6d4;
+--accent-emerald: #10b981;
+--accent-rose: #f43f5e;
+--accent-amber: #f59e0b;
+--font-sans: 'Inter', system-ui, -apple-system, sans-serif;
+```
+
+---
+
+## 8. Live Demonstration Scenarios (SIH Test Matrix)
+
+The application includes 6 pre-loaded scenarios accessible directly from the **Public Verification Inspector**:
+
+| Scenario # | Title | Expected Verdict | Trust Score | Key Indicator |
+| :---: | :--- | :---: | :---: | :--- |
+| **1** | Authentic Emergency Notice (v1) | 🟢 `VERIFIED_CURRENT` | `100%` | Valid ECDSA signature, unrevoked key, matching hash |
+| **2** | Altered Video Payload | 🔴 `TAMPERED` | `30%` | Computed SHA-256 differs from manifest claim |
+| **3** | Compromised Key Order | 🔴 `REVOKED` | `20%` | Key listed on real-time Revocation Ledger |
+| **4** | Notice Version 1 Update Test | 🟡 `SUPERSEDED` | `82%` | Genuinely signed, but v2 has been published |
+| **5** | AI Synthetic Audio Press Clip | 🔴 `SUSPICIOUS` | `15%` | Unsigned content with high FFT frequency cutoff anomaly |
+| **6** | Unverified Policy Draft | 🟡 `UNSIGNED` | `40%` | Missing C2PA metadata manifest |
