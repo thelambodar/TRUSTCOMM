@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AURA-TRUST | Deepfake-Resistant Provenance & Verification System</title>
+  <meta name="description" content="Cryptographically sign authorized institutional communications and verify authenticity, detect deepfakes, and support credential revocation.">
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Outfit:wght@500;600;700;800&display=swap" rel="stylesheet">
+  
+  <!-- FontAwesome Icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  
+  <!-- Custom Design System -->
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Dynamic Cyber Background Canvas -->
+  <canvas id="techBgCanvas" class="tech-bg-canvas"></canvas>
+
+  <div class="app-container">
+    
+    <!-- Top Header & Brand Bar -->
+    <header class="app-header">
+      <div class="brand-section">
+        <div class="brand-icon">
+          <i class="fa-solid fa-shield-halved"></i>
+        </div>
+        <div>
+          <h1 class="brand-title">AURA-TRUST <span style="font-size: 0.8rem; opacity: 0.6; font-weight:400;">v2.4</span></h1>
+          <p class="brand-subtitle">Deepfake-Resistant Provenance & Verification System</p>
+        </div>
+      </div>
+      
+      <div class="header-status-badge">
+        <div class="status-pill">
+          <div class="pulse-dot"></div>
+          <span style="color: var(--text-muted)">Trust Ledger:</span>
+          <span style="color: var(--color-authentic); font-weight:700;">ACTIVE</span>
+        </div>
+        <div class="status-pill" style="display: none;" id="headerRevokedCount">
+          <i class="fa-solid fa-triangle-exclamation" style="color: var(--color-fake)"></i>
+          <span style="color: var(--text-muted)">Revoked Keys:</span>
+          <span style="color: var(--color-fake); font-weight:700;" id="revokedKeyCount">1</span>
+        </div>
+      </div>
+    </header>
+
+    <!-- Main Navigation Tabs -->
+    <nav class="nav-tabs" role="tablist">
+      <button class="tab-btn active" data-tab="tab-verify">
+        <i class="fa-solid fa-magnifying-glass-chart"></i> Verification Inspector
+      </button>
+      <button class="tab-btn" data-tab="tab-publisher">
+        <i class="fa-solid fa-signature"></i> Institutional Publisher Studio
+      </button>
+      <button class="tab-btn" data-tab="tab-revocation">
+        <i class="fa-solid fa-key"></i> Key Revocation Ledger
+      </button>
+      <button class="tab-btn" data-tab="tab-demos">
+        <i class="fa-solid fa-bolt"></i> Interactive Demos
+      </button>
+      <button class="tab-btn" data-tab="tab-arch">
+        <i class="fa-solid fa-diagram-project"></i> ZK Architecture
+      </button>
+    </nav>
+
+    <!-- =================================================================== -->
+    <!-- TAB 1: VERIFICATION INSPECTOR (PUBLIC PORTAL) -->
+    <!-- =================================================================== -->
+    <main id="tab-verify" class="view-content active">
+      <div class="verification-grid">
+        
+        <!-- Left Column: Media Uploader & Live Preview -->
+        <div>
+          <div class="glass-panel">
+            <div class="panel-header">
+              <h2 class="panel-title">
+                <i class="fa-solid fa-cloud-arrow-up"></i> Media & Notice Inspector
+              </h2>
+              <span class="badge badge-info">C2PA JUMBF Enabled</span>
+            </div>
+
+            <!-- Drag & Drop Dropzone -->
+            <div class="dropzone-container" id="dropzone">
+              <div class="dropzone-icon">
+                <i class="fa-solid fa-file-shield"></i>
+              </div>
+              <h3 class="dropzone-title">Drop Official Audio, Video or Notice here</h3>
+              <p class="dropzone-subtitle">Supports MP4, MP3, WAV, PNG, PDF or JSON C2PA Manifests</p>
+              <button class="btn btn-secondary" onclick="document.getElementById('fileInput').click()">
+                <i class="fa-solid fa-folder-open"></i> Select File from Computer
+              </button>
+              <input type="file" id="fileInput" class="file-input-hidden" accept="video/*,audio/*,image/*,.json,.pdf">
+            </div>
+
+            <!-- Media Preview & Canvas Visualizer Viewport -->
+            <div class="forensic-viewport" id="previewViewport" style="display: none;">
+              <!-- Video / Image Preview Area -->
+              <div class="media-preview-container" id="mediaPreviewBox">
+                <video id="videoElement" controls style="display:none;"></video>
+                <img id="imageElement" alt="Notice Preview" style="display:none;">
+                <canvas id="videoOverlayCanvas" class="overlay-heatmap-canvas"></canvas>
+              </div>
+              
+              <!-- Audio Player & FFT Spectrum Canvas -->
+              <div id="audioPreviewBox" style="display:none; padding: 16px; background: #070b16;">
+                <audio id="audioElement" controls style="width: 100%; margin-bottom: 12px;"></audio>
+                <div class="canvas-container">
+                  <canvas id="audioSpectrumCanvas" class="analysis-canvas"></canvas>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Right Column: Tri-State Verdict Banner & Cryptographic Audit -->
+        <div>
+          <!-- Dynamic Tri-State Verdict Banner -->
+          <div id="verdictContainer">
+            <div class="verdict-card state-authentic">
+              <div class="verdict-icon">
+                <i class="fa-solid fa-circle-check"></i>
+              </div>
+              <div class="verdict-body">
+                <span class="badge badge-success">State: 🟢 VERIFIED AUTHENTIC</span>
+                <h3 style="color: var(--color-authentic); margin-top:6px;">Cryptographically Signed & Untampered</h3>
+                <p>Content matches authorized institutional key signature. Key is ACTIVE and unrevoked. Zero AI manipulation detected.</p>
+              </div>
+            </div>
+          </div>
+
+          <!-- Cryptographic Audit & Forensic Specs -->
+          <div class="glass-panel">
+            <div class="panel-header">
+              <h3 class="panel-title">
+                <i class="fa-solid fa-microchip"></i> Cryptographic Audit Trail
+              </h3>
+              <button class="btn btn-secondary" style="padding: 4px 10px; font-size: 0.76rem;" id="toggleJsonBtn">
+                <i class="fa-solid fa-code"></i> View Raw Manifest
+              </button>
+            </div>
+
+            <div class="crypto-spec-list" id="cryptoSpecList">
+              <div class="spec-item">
+                <span class="spec-label"><i class="fa-solid fa-building-columns"></i> Publisher Authority</span>
+                <span class="spec-val" id="specPublisher">National Emergency Management Agency</span>
+              </div>
+              <div class="spec-item">
+                <span class="spec-label"><i class="fa-solid fa-key"></i> Signing Key ID</span>
+                <span class="spec-val" id="specKeyId">KEY-7F89B1A42C</span>
+              </div>
+              <div class="spec-item">
+                <span class="spec-label"><i class="fa-solid fa-shield-virus"></i> Key Revocation Status</span>
+                <span class="spec-val" id="specRevocation" style="color: var(--color-authentic);">ACTIVE (Not Revoked)</span>
+              </div>
+              <div class="spec-item">
+                <span class="spec-label"><i class="fa-solid fa-fingerprint"></i> SHA-256 Digest</span>
+                <span class="spec-val" id="specHash">e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855</span>
+              </div>
+              <div class="spec-item">
+                <span class="spec-label"><i class="fa-solid fa-robot"></i> Deepfake Anomaly Score</span>
+                <span class="spec-val" id="specDeepfake" style="color: var(--color-authentic);">4.1% (PASS)</span>
+              </div>
+              <div class="spec-item">
+                <span class="spec-label"><i class="fa-solid fa-user-ninja"></i> Privacy (ZK Redaction)</span>
+                <span class="spec-val" id="specZk">Zero-Knowledge Commitment Verified</span>
+              </div>
+            </div>
+
+            <!-- Raw JSON C2PA Manifest Viewer -->
+            <div id="jsonViewerContainer" style="display: none; margin-top: 16px;">
+              <p style="font-size: 0.8rem; color: var(--text-muted); margin-bottom: 6px;">C2PA JUMBF Manifest JSON-LD Payload:</p>
+              <pre class="json-code-box" id="jsonCodeBox">{}</pre>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </main>
+
+    <!-- =================================================================== -->
+    <!-- TAB 2: INSTITUTIONAL PUBLISHER STUDIO -->
+    <!-- =================================================================== -->
+    <main id="tab-publisher" class="view-content">
+      <div class="glass-panel" style="max-width: 960px; margin: 0 auto;">
+        <div class="panel-header">
+          <h2 class="panel-title">
+            <i class="fa-solid fa-pen-nib"></i> Institutional Cryptographic Signing Studio
+          </h2>
+          <span class="badge badge-info">WebCrypto ECDSA P-256</span>
+        </div>
+
+        <form id="signingForm">
+          <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
+            
+            <div class="form-group">
+              <label class="form-label">Signing Authority</label>
+              <select class="form-control" id="signerAuthoritySelect">
+                <option value="AUTH-OEM-01">National Emergency Management Agency (NEMA)</option>
+                <option value="AUTH-CRB-02">Central Financial Authority Press Office</option>
+                <option value="AUTH-MAYOR-03">Mayor Executive Communications Office</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label class="form-label">Document / Communication Title</label>
+              <input type="text" class="form-control" id="signerTitle" value="Official Severe Weather & Evacuation Advisory" required>
+            </div>
+
+          </div>
+
+          <div class="form-group">
+            <label class="form-label">Official Notice Body / Communication Payload</label>
+            <textarea class="form-control" id="signerPayload" rows="4" required>OFFICIAL NOTICE: Severe weather advisory issued for Coastal Sector 4. Residents are advised to follow official emergency guidance. Signed by Emergency Operations Director.</textarea>
+          </div>
+
+          <!-- Privacy & Zero-Knowledge Controls -->
+          <div class="switch-group" style="margin-bottom: 20px;">
+            <div>
+              <strong style="font-size: 0.9rem;">Enable Zero-Knowledge Selective Disclosure (Redaction)</strong>
+              <p style="font-size: 0.78rem; color: var(--text-muted);">Redacts sensitive operational fields using salted cryptographic hash commitments.</p>
+            </div>
+            <label class="switch">
+              <input type="checkbox" id="zkRedactToggle" checked>
+              <span class="slider"></span>
+            </label>
+          </div>
+
+          <!-- Action Buttons -->
+          <div style="display: flex; gap: 14px; justify-content: flex-end;">
+            <button type="button" class="btn btn-secondary" id="btnGenNewKey">
+              <i class="fa-solid fa-key"></i> Generate Fresh Keypair
+            </button>
+            <button type="submit" class="btn btn-primary">
+              <i class="fa-solid fa-signature"></i> Digitally Sign & Embed C2PA Manifest
+            </button>
+          </div>
+        </form>
+
+        <!-- Resulting Signed Manifest Box -->
+        <div id="signedResultBox" style="display: none; margin-top: 24px; padding-top: 20px; border-top: 1px solid var(--border-subtle);">
+          <div class="panel-header" style="margin-bottom: 12px; border:none;">
+            <h3 class="panel-title" style="color: var(--color-authentic);">
+              <i class="fa-solid fa-circle-check"></i> C2PA Manifest Generated & Signed!
+            </h3>
+            <button class="btn btn-secondary" id="btnDownloadManifest">
+              <i class="fa-solid fa-download"></i> Export C2PA Manifest (.json)
+            </button>
+          </div>
+          <pre class="json-code-box" id="signedJsonDisplay"></pre>
+        </div>
+      </div>
+    </main>
+
+    <!-- =================================================================== -->
+    <!-- TAB 3: KEY REVOCATION LEDGER -->
+    <!-- =================================================================== -->
+    <main id="tab-revocation" class="view-content">
+      <div class="glass-panel">
+        <div class="panel-header">
+          <h2 class="panel-title">
+            <i class="fa-solid fa-user-shield"></i> Key Revocation & Trust Ledger
+          </h2>
+          <button class="btn btn-danger" id="btnOpenRevokeModal">
+            <i class="fa-solid fa-ban"></i> Report Compromised Key & Revoke
+          </button>
+        </div>
+
+        <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 20px;">
+          When an institutional private key or hardware security module (HSM) is compromised, it is immediately placed on the Revocation Ledger. Any digital notice or deepfake signed by a revoked credential is automatically flagged as <strong style="color: var(--color-fake);">PROVEN FAKE / COMPROMISED</strong>.
+        </p>
+
+        <div class="table-responsive">
+          <table class="custom-table">
+            <thead>
+              <tr>
+                <th>Signing Key ID</th>
+                <th>Authority / Issuer</th>
+                <th>Revocation Timestamp</th>
+                <th>Reason / Incident Report</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody id="revocationTableBody">
+              <!-- Dynamically populated -->
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+
+    <!-- =================================================================== -->
+    <!-- TAB 4: INTERACTIVE DEMO SCENARIOS -->
+    <!-- =================================================================== -->
+    <main id="tab-demos" class="view-content">
+      <div class="glass-panel">
+        <div class="panel-header">
+          <h2 class="panel-title">
+            <i class="fa-solid fa-flask"></i> Instant Forensic Demo Suite
+          </h2>
+          <span class="badge badge-info">Click to Test Verification States</span>
+        </div>
+
+        <div class="demo-grid">
+          
+          <!-- Demo 1: Authentic Emergency Broadcast -->
+          <div class="demo-card" onclick="loadDemoScenario('authentic-video')">
+            <div>
+              <div class="demo-type-icon" style="background: rgba(0, 245, 160, 0.15); color: var(--color-authentic);">
+                <i class="fa-solid fa-video"></i>
+              </div>
+              <span class="badge badge-success" style="margin-bottom: 8px; display:inline-block;">🟢 VERIFIED AUTHENTIC</span>
+              <h3 style="font-size: 1.05rem; margin-bottom: 6px;">Mayor Official Video Broadcast</h3>
+              <p style="font-size: 0.82rem; color: var(--text-muted);">
+                Valid ECDSA signature, unrevoked mayoral key, 0% deepfake manipulation score.
+              </p>
+            </div>
+            <button class="btn btn-secondary" style="margin-top: 16px; width: 100%;">
+              <i class="fa-solid fa-play"></i> Inspect Scenario
+            </button>
+          </div>
+
+          <!-- Demo 2: Synthetic Voice Clone Audio -->
+          <div class="demo-card" onclick="loadDemoScenario('deepfake-audio')">
+            <div>
+              <div class="demo-type-icon" style="background: rgba(255, 59, 92, 0.15); color: var(--color-fake);">
+                <i class="fa-solid fa-microphone-lines-slash"></i>
+              </div>
+              <span class="badge badge-danger" style="margin-bottom: 8px; display:inline-block;">🔴 PROVEN FAKE (Deepfake)</span>
+              <h3 style="font-size: 1.05rem; margin-bottom: 6px;">AI Synthesized Voice Clone Press Audio</h3>
+              <p style="font-size: 0.82rem; color: var(--text-muted);">
+                Spectral FFT analysis detects neural TTS cutoff (>16kHz) and phase discontinuity.
+              </p>
+            </div>
+            <button class="btn btn-danger" style="margin-top: 16px; width: 100%;">
+              <i class="fa-solid fa-play"></i> Inspect Scenario
+            </button>
+          </div>
+
+          <!-- Demo 3: Unsigned Notice Document -->
+          <div class="demo-card" onclick="loadDemoScenario('unsigned-doc')">
+            <div>
+              <div class="demo-type-icon" style="background: rgba(255, 184, 0, 0.15); color: var(--color-unsigned);">
+                <i class="fa-solid fa-file-circle-question"></i>
+              </div>
+              <span class="badge badge-warning" style="margin-bottom: 8px; display:inline-block;">🟡 UNSIGNED CONTENT</span>
+              <h3 style="font-size: 1.05rem; margin-bottom: 6px;">Leaked Financial Policy Notice</h3>
+              <p style="font-size: 0.82rem; color: var(--text-muted);">
+                No C2PA manifest found. Flagged with caution level; requires independent verification.
+              </p>
+            </div>
+            <button class="btn btn-secondary" style="margin-top: 16px; width: 100%;">
+              <i class="fa-solid fa-play"></i> Inspect Scenario
+            </button>
+          </div>
+
+          <!-- Demo 4: Compromised Key Emergency Order -->
+          <div class="demo-card" onclick="loadDemoScenario('revoked-key')">
+            <div>
+              <div class="demo-type-icon" style="background: rgba(255, 59, 92, 0.15); color: var(--color-fake);">
+                <i class="fa-solid fa-key"></i>
+              </div>
+              <span class="badge badge-danger" style="margin-bottom: 8px; display:inline-block;">🔴 PROVEN FAKE (Revoked Key)</span>
+              <h3 style="font-size: 1.05rem; margin-bottom: 6px;">Order Signed with Compromised Key</h3>
+              <p style="font-size: 0.82rem; color: var(--text-muted);">
+                Signed by KEY-REVOKED-HACKED-009. Automatically rejected by Revocation Ledger.
+              </p>
+            </div>
+            <button class="btn btn-danger" style="margin-top: 16px; width: 100%;">
+              <i class="fa-solid fa-play"></i> Inspect Scenario
+            </button>
+          </div>
+
+        </div>
+      </div>
+    </main>
+
+    <!-- =================================================================== -->
+    <!-- TAB 5: SYSTEM ARCHITECTURE & ZK PRIVACY -->
+    <!-- =================================================================== -->
+    <main id="tab-arch" class="view-content">
+      <div class="glass-panel">
+        <div class="panel-header">
+          <h2 class="panel-title">
+            <i class="fa-solid fa-sitemap"></i> System Architecture & Zero-Knowledge Cryptography
+          </h2>
+        </div>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 24px;">
+          <div>
+            <h3 style="color: var(--color-primary); margin-bottom: 12px;">1. C2PA Cryptographic Provenance</h3>
+            <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 14px;">
+              Every official announcement, audio message, or emergency broadcast is bound to a <strong>C2PA JUMBF metadata manifest</strong>. The manifest contains a SHA-256 digest of the exact raw media frames signed via ECDSA (P-256 curve) using the issuing agency's private key.
+            </p>
+
+            <h3 style="color: var(--color-primary); margin-bottom: 12px;">2. Tri-State Verdict Classification</h3>
+            <ul style="font-size: 0.88rem; color: var(--text-muted); padding-left: 20px; margin-bottom: 14px;">
+              <li><strong style="color: var(--color-authentic);">Verified Authentic:</strong> Valid ECDSA signature + match with unrevoked key + 0% tamper anomaly.</li>
+              <li><strong style="color: var(--color-unsigned);">Unsigned:</strong> Media lacks cryptographic signatures. Users are alerted to exercise caution.</li>
+              <li><strong style="color: var(--color-fake);">Proven Fake:</strong> Signature mismatch, altered content hash, revoked credential, OR high spectral/spatial deepfake score.</li>
+            </ul>
+          </div>
+
+          <div>
+            <h3 style="color: var(--color-primary); margin-bottom: 12px;">3. Privacy Preservation (Zero-Knowledge Redaction)</h3>
+            <p style="font-size: 0.88rem; color: var(--text-muted); margin-bottom: 14px;">
+              Institutional senders may need to redact sensitive operational data (e.g. precise GPS coordinates of emergency responders) while maintaining public auditability. VERIPROV uses <strong>Salted Hash Commitments</strong>:
+            </p>
+            <pre class="json-code-box" style="margin-bottom: 14px;">Commitment = SHA256(FieldValue + ":" + RandomSalt)
+Recipient verifies commitment hash without revealing raw text!</pre>
+
+            <h3 style="color: var(--color-primary); margin-bottom: 12px;">4. Real-time Key Revocation Ledger</h3>
+            <p style="font-size: 0.88rem; color: var(--text-muted);">
+              In the event of key compromise or server breach, security teams publish key revocation entries. The verification portal instantly invalidates all signatures tied to compromised credentials.
+            </p>
+          </div>
+        </div>
+      </div>
+    </main>
+
+  </div> <!-- /app-container -->
+
+  <!-- Modal for Key Revocation -->
+  <div class="modal-overlay" id="revokeModal">
+    <div class="modal-card">
+      <div class="panel-header">
+        <h3 class="panel-title" style="color: var(--color-fake);">
+          <i class="fa-solid fa-triangle-exclamation"></i> Revoke Compromised Credential
+        </h3>
+        <button class="btn btn-secondary" style="padding: 4px 8px;" onclick="closeRevokeModal()">✕</button>
+      </div>
+
+      <form id="revokeKeyForm">
+        <div class="form-group">
+          <label class="form-label">Signing Key ID to Revoke</label>
+          <input type="text" class="form-control" id="revokeKeyId" placeholder="e.g. KEY-7F89B1A42C" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Authority / Agency Name</label>
+          <input type="text" class="form-control" id="revokeAuthorityName" placeholder="e.g. Regional Alert Bureau" required>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label">Reason for Revocation / Security Incident</label>
+          <textarea class="form-control" id="revokeReason" placeholder="Describe key leak or security compromise..." required></textarea>
+        </div>
+
+        <div style="display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px;">
+          <button type="button" class="btn btn-secondary" onclick="closeRevokeModal()">Cancel</button>
+          <button type="submit" class="btn btn-danger">
+            <i class="fa-solid fa-ban"></i> Confirm Immediate Key Revocation
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- App Module -->
+  <script type="module" src="js/app.js"></script>
+
+</body>
+</html>

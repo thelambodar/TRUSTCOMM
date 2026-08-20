@@ -1,0 +1,6 @@
+{
+  "name": "Media Authenticity Verification Platform",
+  "description": "Full-stack media authenticity verification platform with cryptographic signatures, institutional signing workflows, multi-role RBAC, and public verification.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}

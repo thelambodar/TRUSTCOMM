@@ -1,0 +1,194 @@
+{
+  "entities": {
+    "Institution": {
+      "title": "Institution",
+      "description": "An authenticated media issuing institution such as a government department, news outlet, or public agency.",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Full name of the institution",
+          "maxLength": 200
+        },
+        "domain": {
+          "type": "string",
+          "description": "Verified domain name of the institution",
+          "maxLength": 150
+        },
+        "status": {
+          "type": "string",
+          "description": "Current status of the institution",
+          "enum": ["ACTIVE", "PENDING", "SUSPENDED"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Creation timestamp"
+        }
+      },
+      "required": ["name", "domain", "status", "createdAt"]
+    },
+    "Credential": {
+      "title": "Credential",
+      "description": "Cryptographic key and certificate credential used to digitally sign media.",
+      "type": "object",
+      "properties": {
+        "institutionId": {
+          "type": "string",
+          "description": "Foreign key reference to the issuing institution",
+          "maxLength": 128
+        },
+        "publicKey": {
+          "type": "string",
+          "description": "PEM formatted SPKI public key",
+          "maxLength": 4096
+        },
+        "keyAlgorithm": {
+          "type": "string",
+          "description": "Cryptographic algorithm name",
+          "enum": ["RSA-PSS-SHA256", "ECDSA-P256-SHA256"]
+        },
+        "status": {
+          "type": "string",
+          "description": "Credential operational status",
+          "enum": ["ACTIVE", "REVOKED", "EXPIRED"]
+        },
+        "revokedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when credential was revoked by system admin"
+        },
+        "revocationReason": {
+          "type": "string",
+          "description": "Explanation for key revocation",
+          "maxLength": 500
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Timestamp when credential was issued"
+        }
+      },
+      "required": ["institutionId", "publicKey", "keyAlgorithm", "status", "createdAt"]
+    },
+    "MediaRecord": {
+      "title": "MediaRecord",
+      "description": "Metadata manifest and cryptographic signature for authentic media.",
+      "type": "object",
+      "properties": {
+        "institutionId": {
+          "type": "string",
+          "description": "Issuing institution ID",
+          "maxLength": 128
+        },
+        "credentialId": {
+          "type": "string",
+          "description": "Credential used for digital signature",
+          "maxLength": 128
+        },
+        "mediaHash": {
+          "type": "string",
+          "description": "SHA-256 hex string of the media binary",
+          "maxLength": 64
+        },
+        "mediaType": {
+          "type": "string",
+          "description": "Category of media file",
+          "enum": ["AUDIO", "VIDEO", "NOTICE", "EMERGENCY"]
+        },
+        "signature": {
+          "type": "string",
+          "description": "Base64 encoded cryptographic signature produced by backend KMS",
+          "maxLength": 2048
+        },
+        "storagePath": {
+          "type": "string",
+          "description": "Cloud Storage URI under media/institutions/{institutionId}/",
+          "maxLength": 512
+        },
+        "blockchainTxHash": {
+          "type": "string",
+          "description": "Blockchain anchoring transaction hash (optional modular hook)",
+          "maxLength": 128
+        },
+        "status": {
+          "type": "string",
+          "description": "Signing lifecycle status",
+          "enum": ["PENDING_SIGNATURE", "SIGNED", "REJECTED"]
+        },
+        "createdAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Upload timestamp"
+        }
+      },
+      "required": ["institutionId", "mediaHash", "mediaType", "storagePath", "status", "createdAt"]
+    },
+    "VerificationLog": {
+      "title": "VerificationLog",
+      "description": "Audit log document created upon every public or institutional verification request.",
+      "type": "object",
+      "properties": {
+        "mediaHash": {
+          "type": "string",
+          "description": "Queried SHA-256 hash",
+          "maxLength": 64
+        },
+        "verdict": {
+          "type": "string",
+          "description": "Verification outcome",
+          "enum": ["AUTHENTIC", "UNSIGNED", "PROVEN_FAKE"]
+        },
+        "deepfakeScore": {
+          "type": "number",
+          "description": "AI analysis synthetic manipulation score (0.0 to 1.0)"
+        },
+        "isSigned": {
+          "type": "boolean",
+          "description": "Whether a valid signature was found"
+        },
+        "issuerId": {
+          "type": "string",
+          "description": "Issuing institution ID if authenticated",
+          "maxLength": 128
+        },
+        "tamperDetected": {
+          "type": "boolean",
+          "description": "Whether hash or signature tampering was detected"
+        },
+        "checkedAt": {
+          "type": "string",
+          "format": "date-time",
+          "description": "Verification execution timestamp"
+        }
+      },
+      "required": ["mediaHash", "verdict", "isSigned", "tamperDetected", "checkedAt"]
+    }
+  },
+  "firestore": {
+    "/institutions/{institutionId}": {
+      "schema": {
+        "$ref": "#/entities/Institution"
+      },
+      "description": "Directory of registered and verified institutions"
+    },
+    "/credentials/{credentialId}": {
+      "schema": {
+        "$ref": "#/entities/Credential"
+      },
+      "description": "Cryptographic credentials and public keys"
+    },
+    "/mediaRecords/{recordId}": {
+      "schema": {
+        "$ref": "#/entities/MediaRecord"
+      },
+      "description": "Registered media manifests, SHA-256 hashes, and digital signatures"
+    },
+    "/verificationLogs/{logId}": {
+      "schema": {
+        "$ref": "#/entities/VerificationLog"
+      },
+      "description": "System-wide verification audit logs"
+    }
+  }
+}

@@ -1,0 +1,44 @@
+{
+  "indexes": [
+    {
+      "collectionGroup": "mediaRecords",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "mediaHash", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "mediaRecords",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "institutionId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "credentials",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "institutionId", "order": "ASCENDING" },
+        { "fieldPath": "status", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "verificationLogs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "mediaHash", "order": "ASCENDING" },
+        { "fieldPath": "checkedAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "verificationLogs",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "checkedAt", "order": "DESCENDING" }
+      ]
+    }
+  ],
+  "fieldOverrides": []
+}

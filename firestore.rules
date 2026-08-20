@@ -1,0 +1,73 @@
+rules_version = '2';
+
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // Default-deny all unhandled collections
+    match /{document=**} {
+      allow read, write: if false;
+    }
+
+    // Helper functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function isValidId(id) {
+      return id is string && id.size() <= 128 && id.matches('^[a-zA-Z0-9_\\-]+$');
+    }
+
+    function isSystemAdmin() {
+      return isSignedIn() && (
+        request.auth.token.role == 'SYSTEM_ADMIN' ||
+        exists(/databases/$(database)/documents/admins/$(request.auth.uid))
+      );
+    }
+
+    function isInstitutionalIssuer(institutionId) {
+      return isSignedIn() && (
+        (request.auth.token.role == 'INSTITUTIONAL_ISSUER' && request.auth.token.institutionId == institutionId) ||
+        isSystemAdmin()
+      );
+    }
+
+    // 1. institutions collection
+    // Public can view verified institutions. Only System Admin via Admin SDK/Cloud Functions can modify.
+    match /institutions/{institutionId} {
+      allow get, list: if true; // Public directory of verified issuing institutions
+      allow create, update, delete: if false; // Direct client modification prohibited; mutations handled via Cloud Functions/Admin SDK
+    }
+
+    // 2. credentials collection
+    // Public can read active public keys to mathematically verify signatures.
+    // Direct client writes/revocations strictly forbidden.
+    match /credentials/{credentialId} {
+      allow get, list: if true; // Public key discovery for cryptographic verification
+      allow create, update, delete: if false; // Managed exclusively by Cloud Functions / KMS backend
+    }
+
+    // 3. mediaRecords collection
+    // Public can query by mediaHash to verify authenticity.
+    // Issuers can query their own institution's media.
+    // Client direct writes/mutations forbidden to prevent tampering with signatures and hashes.
+    match /mediaRecords/{recordId} {
+      allow get: if true;
+      allow list: if true; // Allows hash lookup queries for public verification
+      allow create, update, delete: if false; // Must be created via uploadMedia and signed via signMedia Cloud Functions
+    }
+
+    // 4. verificationLogs collection
+    // Read-only for audit reporting and System Admins.
+    // Logs are created server-side only in verifyMedia Cloud Function.
+    match /verificationLogs/{logId} {
+      allow get, list: if isSystemAdmin();
+      allow create, update, delete: if false; // Generated exclusively by backend verifyMedia function
+    }
+
+    // 5. admins metadata collection
+    match /admins/{adminId} {
+      allow read: if isSystemAdmin();
+      allow write: if false;
+    }
+  }
+}
