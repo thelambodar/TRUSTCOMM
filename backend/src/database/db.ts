@@ -75,7 +75,7 @@ export class InMemoryDB {
       revocationReason: null,
       createdAt: '2025-01-11T00:00:00.000Z',
     };
-    NodeCryptoKMSProvider.registerKey(cred1.id, (kmsProvider as any).privateKeyVault?.get(credPair1.privateKeyId) || '');
+    NodeCryptoKMSProvider.associateKey(cred1.id, credPair1.privateKeyId);
     this.credentials.set(cred1.id, cred1);
 
     const credPair2 = await kmsProvider.generateKeyPair('ECDSA-P256-SHA256');
@@ -89,6 +89,7 @@ export class InMemoryDB {
       revocationReason: null,
       createdAt: '2025-02-16T00:00:00.000Z',
     };
+    NodeCryptoKMSProvider.associateKey(cred2.id, credPair2.privateKeyId);
     this.credentials.set(cred2.id, cred2);
 
     // Seed a REVOKED Credential for testing revocation alerts
@@ -103,6 +104,7 @@ export class InMemoryDB {
       revocationReason: 'Suspected private key exposure during security perimeter audit (CVE-2026-0812)',
       createdAt: '2024-06-01T00:00:00.000Z',
     };
+    NodeCryptoKMSProvider.associateKey(credRevoked.id, credPairRevoked.privateKeyId);
     this.credentials.set(credRevoked.id, credRevoked);
 
     // 3. Seed Sample Official Media Records

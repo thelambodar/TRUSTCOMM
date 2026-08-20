@@ -315,7 +315,7 @@ async function startServer() {
 
   // Storage file retrieval
   app.get('/api/storage/*', (req, res) => {
-    const storagePath = req.params[0];
+    const storagePath = (req.params as any)[0];
     const file = db.getStorageFile(storagePath);
     if (!file) {
       return res.status(404).send('File not found in Cloud Storage bucket');

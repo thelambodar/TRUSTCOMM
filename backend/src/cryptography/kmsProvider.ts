@@ -93,6 +93,16 @@ export class NodeCryptoKMSProvider implements IKMSProvider {
   static registerKey(keyId: string, privateKeyPem: string) {
     NodeCryptoKMSProvider.privateKeyVault.set(keyId, privateKeyPem);
   }
+
+  /**
+   * Associates an existing generated private key with a credential ID.
+   */
+  static associateKey(targetCredentialId: string, sourceKeyId: string) {
+    const key = NodeCryptoKMSProvider.privateKeyVault.get(sourceKeyId);
+    if (key) {
+      NodeCryptoKMSProvider.privateKeyVault.set(targetCredentialId, key);
+    }
+  }
 }
 
 // Export singleton KMS Provider instance
